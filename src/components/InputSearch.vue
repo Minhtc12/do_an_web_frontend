@@ -4,7 +4,7 @@ export default{
         modelValue: {type: String,default: ""},
     },
     emits: ["submit","update:modelValue"],
-    method: {
+    methods: {
         updateModelValue(e) {
         this.$emit("update:modelValue", e.target.value);
         },
