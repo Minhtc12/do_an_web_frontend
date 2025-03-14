@@ -47,6 +47,72 @@ export default {
         ContactList,
     },
     // Đoạn mã xử lý đầy đủ sẽ trình bày bên dưới
+    data(){
+        return{
+            contact: [],
+            activeIndex: -1,
+            searchText: "",
+        };
+    },
+    watch: {
+        // giam sat cac thay doi cua bien searchText
+        // Bor chon phan tu dang duoc chon trong danh sach
+        searchText(){
+            this.activeIndex=-1;
+        },
+    },
+    computed: {
+        // chuyen cac doi tuong contact thanh chuoi de tiien tim kiem
+        contactStrings() {
+            return this.contacts.map((contact) =>{
+                const{name,email,address,phone } =contact;
+                retrun [name, email, address, phone].join("");
+            });
+        },
+        //tra ve cac contact cos chua thong tin can tim kiem.
+        filteredContacts() {
+            if( !this.searchText) return this.contacts;
+            return this.contacts.filter((_contact, index)=>
+                this.contactStrings[index].includes(this.searchText)
+            );
+        },
+        activeContact() {
+            if (this.activeIndex < 0) return null;
+            return this.filteredContacts[this.activeIndex];
+        },
+        filteredContactsCount() {
+            return this.filteredContacts.length;
+        },
+    },
+    methods: {
+        async retrieveContacts() {
+         try {
+            this.contacts = await ContactService.getAll();
+         } catch (error) {
+            console.log(error);
+         }
+        },
+        refreshList() {
+            this.retrieveContacts();
+            this.activeIndex = -1;
+        },
+        async removeAllContacts(){
+            if(confirm("Bạn muốn xóa tất cả Liên hệ?")) {
+                try {
+                    await ContactService.deleteAll();
+                    this.refreshList();
+                    }catch(error){
+                        console.log(error);
+                    }
+            }
+        },
+        goToAddContact() {
+            this.$router.push({name: "contact.add"});
+        },
+    },
+    mounted(){
+        this.refreshList();
+    },
 };
 </script>
 <style scoped>
