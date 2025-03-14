@@ -1,11 +1,11 @@
-import createApiClient from "./api.server";
+import createApiClient from "./api.service";
 
 class ContactService {
     constructor(baseUrl="/api/contacts"){
         this.api= createApiClient(baseUrl);
     }
-    async getALL(){
-        return (await this.api.get("/").data);
+    async getAll(){
+        return (await this.api.get("/")).data;
     }
     async create(data){
         return (await this.api.post("/",data)).data;

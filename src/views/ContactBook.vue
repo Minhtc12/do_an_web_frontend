@@ -49,7 +49,7 @@ export default {
     // Đoạn mã xử lý đầy đủ sẽ trình bày bên dưới
     data(){
         return{
-            contact: [],
+            contacts: [],
             activeIndex: -1,
             searchText: "",
         };
@@ -66,7 +66,7 @@ export default {
         contactStrings() {
             return this.contacts.map((contact) =>{
                 const{name,email,address,phone } =contact;
-                retrun [name, email, address, phone].join("");
+                return [name, email, address, phone].join("");
             });
         },
         //tra ve cac contact cos chua thong tin can tim kiem.
