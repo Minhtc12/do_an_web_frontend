@@ -65,14 +65,27 @@ export default {
 
     const handleRegister = async () => {
       try {
-        const payload = { TEN: name.value, Email: email.value, Password: password.value };
+        const payload = {
+          TEN: name.value,
+          Email: email.value,
+          Password: password.value,
+        };
         console.log("Payload gửi đi:", payload);
+
+        // Gửi yêu cầu đăng ký
         const response = await AuthService.register(payload);
         console.log("Đăng ký thành công:", response);
-        router.push({ path: "/login", query: { successMessage: "Registration successful! Please log in." } }); // Chuyển hướng đến trang đăng nhập
+
+        // Chuyển hướng đến trang đăng nhập với thông báo thành công
+        const router = useRouter(); // Import useRouter ở đầu file nếu chưa có
+        router.push({
+          path: "/login",
+          query: { successMessage: "Đăng ký thành công! Vui lòng đăng nhập." },
+        });
       } catch (error) {
+        // Xử lý lỗi
         console.error("Lỗi khi đăng ký:", error);
-        errorMessage.value = error.response?.data?.message || "An error occurred.";
+        errorMessage.value = error.response?.data?.message || "Đã xảy ra lỗi trong quá trình đăng ký.";
       }
     };
 

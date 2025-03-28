@@ -63,10 +63,20 @@
 
 <script>
 import { ref } from "vue";
-import { useRouter } from "vue-router"; // Import useRouter
+
 import { useAuthStore } from "../stores/authStore";
+import { useRouter, useRoute } from "vue-router";
 
 export default {
+  data() {
+  return {
+    email: "",
+    password: "",
+    userType: "Reader", // Mặc định là Reader
+    successMessage: "", // Thêm biến để hiển thị thông báo
+  };
+},
+
   setup() {
     const authStore = useAuthStore();
     const router = useRouter(); // Khai báo router
@@ -74,27 +84,45 @@ export default {
     const password = ref("");
     const role = ref("Reader"); // Giá trị mặc định
     const errorMessage = ref("");
+    const route = useRoute(); // Sử dụng useRoute để lấy query
+  const successMessage = route.query.successMessage || ""; // Nếu không có, gán giá trị mặc định
 
-    const handleLogin = async () => {
+
+//     const handleLogin = async () => {
+//   try {
+//     console.log("Bắt đầu đăng nhập...");
+//     await authStore.login(email.value, password.value, role.value);
+
+//     console.log("Đăng nhập thành công:", authStore.role);
+
+//     // Logic điều hướng dựa trên vai trò
+//     const dashboardPath =
+//       authStore.role === "Reader"
+//         ? "/reader-dashboard"
+//         : authStore.role === "Manager" // Quản lý
+//         ? "/manager-dashboard"
+//         : "/employee-dashboard"; // Nhân viên
+//     console.log("Điều hướng đến:", dashboardPath);
+
+//     router.push(dashboardPath); // Điều hướng đến đúng trang dashboard
+//   } catch (error) {
+//     console.error("Lỗi trong handleLogin:", error.message);
+//     errorMessage.value = error.message || "Đã xảy ra lỗi khi đăng nhập.";
+//   }
+// };
+const handleLogin = async () => {
   try {
     console.log("Bắt đầu đăng nhập...");
     await authStore.login(email.value, password.value, role.value);
+
     console.log("Đăng nhập thành công:", authStore.role);
 
-    // Logic điều hướng dựa trên vai trò
-    const dashboardPath =
-      authStore.role === "Reader"
-        ? "/reader-dashboard"
-        : authStore.role === "Quản lý"
-        ? "/manager-dashboard" // Đường dẫn cho "Quản lý"
-        : "/employee-dashboard"; // Đường dẫn mặc định cho "Nhân viên"
-    console.log("Điều hướng đến:", dashboardPath);
-
-    router.push(dashboardPath); // Điều hướng đến đúng dashboard
-    console.log("Đã gọi router.push");
+    // Điều hướng đến trang chủ sau khi đăng nhập
+    router.push("/"); // Chuyển hướng đến Home.vue
+    console.log("Điều hướng đến: /");
   } catch (error) {
     console.error("Lỗi trong handleLogin:", error.message);
-    errorMessage.value = error.message; // Hiển thị lỗi lên form
+    errorMessage.value = error.message || "Đã xảy ra lỗi khi đăng nhập."; // Hiển thị lỗi lên form
   }
 };
 
@@ -104,6 +132,8 @@ export default {
       role,
       errorMessage,
       handleLogin,
+      successMessage,
+
     };
   },
 };

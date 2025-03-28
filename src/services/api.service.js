@@ -33,5 +33,18 @@ api.interceptors.response.use(
     return Promise.reject(error); // Ném lỗi để xử lý ở nơi gọi
   }
 );
-
+//xử lý token hết hạn
+// api.interceptors.response.use(
+//   (response) => {
+//     return response;
+//   },
+//   (error) => {
+//     if (error.response?.status === 401) {
+//       console.warn("Token hết hạn hoặc không hợp lệ. Chuyển hướng đến trang đăng nhập.");
+//       localStorage.removeItem("token"); // Xóa token cũ
+//       window.location.href = "/login"; // Chuyển hướng đến trang đăng nhập
+//     }
+//     return Promise.reject(error);
+//   }
+// );
 export default api;

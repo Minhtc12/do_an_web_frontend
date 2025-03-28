@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import AuthService from "../services/auth.service";
+import { useRouter } from "vue-router";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -9,44 +10,47 @@ export const useAuthStore = defineStore("auth", {
   }),
   getters: {
     isAuthenticated: (state) => !!state.token, // Kiểm tra trạng thái đăng nhập
-    isReader: (state) => state.role === "Reader",
+    isReader: (state) => state.role === "Reader", // Reader không có role
     isEmployee: (state) => state.role === "Employee",
     isManager: (state) => state.role === "Manager",
   },
   actions: {
     initialize() {
-      this.token = localStorage.getItem("token");
-      this.role = localStorage.getItem("role");
-      this.user = JSON.parse(localStorage.getItem("user")); // Lấy thông tin user từ localStorage
-      console.log("Đã khởi tạo trạng thái từ LocalStorage:", { token: this.token, role: this.role, user: this.user });
-    },
+  try {
+    const storedRole = localStorage.getItem("role");
+    this.role = storedRole && storedRole !== "" ? storedRole : null; // Cập nhật role
 
-    async login(email, password, userType) {
-      try {
-        const endpoint = userType === "Employee" ? "/employees/login" : "/readers/login";
-        console.log("Gửi yêu cầu đến endpoint:", endpoint);
+    const storedUser = localStorage.getItem("user");
+    this.user = storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : (this.role || "Reader");
 
-        // Gọi AuthService.login và nhận phản hồi từ backend
-        const response = await AuthService.login(email, password, endpoint);
-        console.log("Phản hồi từ backend:", response);
+    console.log("Đã khởi tạo trạng thái từ LocalStorage:", { token: this.token, role: this.role, user: this.user });
+  } catch (error) {
+    console.error("Lỗi khi khởi tạo trạng thái:", error);
+    this.token = null;
+    this.role = null;
+    this.user = null;
+  }
+},
+   async login(email, password, userType) {
+  try {
+    const endpoint = userType === "Employee" ? "/employees/login" : "/readers/login";
+    const response = await AuthService.login(email, password, endpoint);
 
-        // Lưu thông tin đăng nhập
-        this.token = response.token; // Lưu token
-        this.role = response.role;  // Lưu vai trò
-        this.user = response.name || null; // Lưu tên người dùng (nếu có)
+    this.token = response.token;
+    this.role = response.role; // Cập nhật vai trò chính xác từ backend
+    this.user = response.name || "Reader";
 
-        // Lưu vào localStorage
-        localStorage.setItem("token", this.token);
-        localStorage.setItem("role", this.role);
-        localStorage.setItem("user", JSON.stringify(this.user)); // Lưu thông tin user dưới dạng JSON
+    // Lưu thông tin vào localStorage
+    localStorage.setItem("token", this.token);
+    localStorage.setItem("role", this.role); // Lưu vai trò
+    localStorage.setItem("user", JSON.stringify(this.user));
 
-        console.log("Đã lưu thông tin vào authStore:", { token: this.token, role: this.role, user: this.user });
-      } catch (error) {
-        console.error("Lỗi trong authStore.login:", error.message);
-        throw error;
-      }
-    },
-
+    console.log("Đăng nhập thành công:", { token: this.token, role: this.role, user: this.user });
+  } catch (error) {
+    console.error("Lỗi đăng nhập:", error.message || error);
+    throw error;
+  }
+},
     logout() {
       this.token = null; // Xóa token
       this.role = null;  // Xóa vai trò

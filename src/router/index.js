@@ -1,28 +1,59 @@
 import { createWebHistory, createRouter } from "vue-router";
 import { useAuthStore } from "../stores/authStore";
 import Home from "../views/Home.vue";
+import BookManagement from "../views/BookManagement.vue";
+import AddBook from "../views/AddBook.vue"
+import BorrowingManagement from "@/views/BorrowingManagement.vue"; // Đảm bảo import file đúng
+
 
 const routes = [
-  // Trang chủ
-  { path: "/", component: Home },
-
-  // Dashboard cho các vai trò
-  { path: "/reader-dashboard", component: () => import("../views/ReaderDashboard.vue"), meta: { requiresAuth: true, role: "Reader" } },
-  { path: "/manager-dashboard", component: () => import("../views/ManagerDashboard.vue"), meta: { requiresAuth: true, role: "Quản lý" } },
-  { path: "/employee-dashboard", component: () => import("../views/EmployeeDashboard.vue"), meta: { requiresAuth: true, role: "Nhân viên" } },
-
-
-  // Đăng nhập
+  { path: "/", component: Home }, // Trang chủ (chung cho tất cả)
+  { path: "/users", component: () => import("../views/Users.vue"), meta: { requiresAuth: true, role: "Manager" } },
+  { path: "/publishers", component: () => import("../views/Publishers.vue"), meta: { requiresAuth: true, role: "Manager" } },
+  { path: "/borrow-requests", component: () => import("../views/BorrowRequests.vue"), meta: { requiresAuth: true, role: ["Manager", "Employee"] } },
+  { path: "/profile", component: () => import("../views/Profile.vue"), meta: { requiresAuth: true, role: "Reader" } },
+  { path: "/borrow-history", component: () => import("../views/BorrowHistory.vue"), meta: { requiresAuth: true, role: "Reader" } },
   { path: "/login", component: () => import("../views/LoginForm.vue") },
-  //dăng ký
-  { path: "/register", component: () => import("../views/RegisterForm.vue") }, // Đăng ký
- 
+  { path: "/register", component: () => import("../views/RegisterForm.vue") }, // Đăng Ký
+  
+ {
+    path: "/books", // Đường dẫn khi nhấn vào "Book"
+    name: "BookManagement",
+    component: BookManagement,
+  },
+  {
+    path: "/books/add",
+    name: "AddBook",
+    component: AddBook,
+  },
+  {
+  path: "/books/:MASACH",
+  name: "BookDetail",
+  component: () => import("../views/BookDetail.vue"),
+},
+{
+  path: "/books/:MASACH/edit",
+  name: "EditBook",
+  component: () => import("../views/EditBook.vue"),
+},
+{
+  path: "/books/:MASACH/borrow",
+  name: "BorrowBook",
+  component: () => import("../views/BorrowBook.vue"),
+},
+  {
+  path: "/borrowing/requests",
+  name: "BorrowingRequests",
+  component: () => import("../views/BorrowRequests.vue"),
+  meta: { requiresAuth: true, role: ["Nhân viên", "Quản lý"] }, // Thêm cả quyền Quản lý
+},
+{
+    path: "/borrowing-management",
+    name: "BorrowingManagement",
+    component: BorrowingManagement,
+  },
 
-  // Trang không có quyền truy cập
-  { path: "/unauthorized", component: () => import("../views/Unauthorized.vue") },
 
-  // Fallback cho trang không tồn tại
-  { path: "/:pathMatch(.*)*", component: () => import("../views/NotFound.vue") },
 ];
 
 const router = createRouter({
@@ -34,17 +65,17 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
-  // Kiểm tra xác thực (requiresAuth)
+  // Kiểm tra đăng nhập
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return next("/login"); // Chuyển hướng đến đăng nhập nếu chưa đăng nhập
+    return next("/login");
   }
 
-  // Kiểm tra vai trò (role)
-  if (to.meta.role && authStore.role !== to.meta.role) {
-    return next({ path: "/unauthorized", query: { role: to.meta.role } }); // Chuyển đến trang không có quyền truy cập
+  // Kiểm tra vai trò
+  if (to.meta.role && ![].concat(to.meta.role).includes(authStore.role)) {
+    return next("/unauthorized");
   }
 
-  next(); // Cho phép tiếp tục nếu đủ điều kiện
+  next();
 });
 
 export default router;

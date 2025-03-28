@@ -1,12 +1,11 @@
 <template>
   <header>
-    <!-- Navigation bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
       <div class="container">
         <!-- Logo -->
-        <a class="navbar-brand" href="#">
-          <i class="bi bi-book"></i> Library Management
-        </a>
+        <router-link to="/" class="navbar-brand">
+          <i class="bi bi-book"></i> Library
+        </router-link>
 
         <!-- Toggle button for small screens -->
         <button
@@ -23,8 +22,8 @@
 
         <!-- Navigation links -->
         <div class="collapse navbar-collapse" id="navbarContent">
-          <!-- Left-side navigation -->
           <ul class="navbar-nav me-auto">
+            <!-- Home: Hiển thị cho mọi vai trò -->
             <li class="nav-item">
               <router-link to="/" class="nav-link">
                 <i class="bi bi-house-door"></i> Home
@@ -32,40 +31,69 @@
             </li>
             <li class="nav-item">
               <router-link to="/books" class="nav-link">
-                <i class="bi bi-book-half"></i> Books
+                <i class="bi bi-book"></i> Book 
               </router-link>
             </li>
+
+            <!-- Links dành cho Quản lý -->
+            <li v-if="isAdmin" class="nav-item">
+              <router-link to="/users" class="nav-link">
+                <i class="bi bi-people"></i> Users
+              </router-link>
+            </li>
+            <li v-if="isAdmin" class="nav-item">
+              <router-link to="/publishers" class="nav-link">
+                <i class="bi bi-building"></i> Publishers
+              </router-link>
+            </li>
+            
+    
+
+            <!-- Links dành cho Nhân viên -->
+            <li v-if="isAdmin || isEmployee" class="nav-item">
+              <router-link to="/borrow-requests" class="nav-link">
+                <i class="bi bi-list-check"></i> Borrow
+              </router-link>
+            </li>
+            <li v-if="isAdmin || isEmployee"><router-link to="/borrowing-management">Borrow</router-link></li>
+    
+
+            <!-- Links dành cho Độc giả -->
+             <li v-if="isReader" class="nav-item">
+              <router-link to="/books" class="nav-link">
+                <i class="bi bi-book"></i> Book 
+              </router-link>
+            </li>
+            <li v-if="isReader" class="nav-item">
+              <router-link to="/profile" class="nav-link">
+                <i class="bi bi-person-circle"></i> My Profile
+              </router-link>
+            </li>
+            <!-- <li v-if="isReader" class="nav-item">
+              <router-link to="/" class="nav-link">
+                <i class="bi bi-bookmark-check"></i> My Borrow History
+              </router-link>
+            </li> -->
+            <li v-if="isReader"><router-link to="/borrowing-management">Borrow</router-link></li>
+    
           </ul>
 
-          <!-- Right-side account actions -->
+          <!-- Account and Authentication -->
           <ul class="navbar-nav ms-auto">
-            <!-- Login and Register -->
+            <!-- Nếu chưa đăng nhập: Hiển thị nút Đăng Nhập và Đăng Ký -->
             <li v-if="!isAuthenticated" class="nav-item">
-              <router-link to="/login" class="nav-link">Login</router-link>
+              <router-link to="/login" class="nav-link">Đăng Nhập</router-link>
             </li>
             <li v-if="!isAuthenticated" class="nav-item">
-              <router-link to="/register" class="nav-link">Register</router-link>
+              <router-link to="/register" class="nav-link">Đăng Ký</router-link>
             </li>
 
-            <!-- Dropdown for logged-in users -->
-            <li v-if="isAuthenticated" class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="userDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <i class="bi bi-person-circle"></i> Welcome, {{ userName }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <li>
-                  <button class="dropdown-item" @click="logout">
-                    <i class="bi bi-box-arrow-right"></i> Logout
-                  </button>
-                </li>
-              </ul>
+            <!-- Nếu đã đăng nhập: Hiển thị Welcome và Logout -->
+            <li v-if="isAuthenticated" class="nav-item">
+              <span class="nav-link">Welcome, {{ userName }}</span>
+            </li>
+            <li v-if="isAuthenticated" class="nav-item">
+              <button class="btn btn-link nav-link" @click="logout">Logout</button>
             </li>
           </ul>
         </div>
@@ -75,27 +103,33 @@
 </template>
 
 <script>
-import { useAuthStore } from "../stores/authStore";
 import { computed } from "vue";
+import { useAuthStore } from "../stores/authStore";
 import { useRouter } from "vue-router";
 
 export default {
   setup() {
     const authStore = useAuthStore();
     const router = useRouter();
+    console.log("Role từ authStore:", authStore.role);
+    // Kiểm tra vai trò người dùng
+    const isAuthenticated = computed(() => authStore.isAuthenticated); // Xác định trạng thái đăng nhập
+    const isAdmin = computed(() => authStore.role === "Quản lý"); // Vai trò: Quản lý
+    const isEmployee = computed(() => authStore.role === "Nhân viên"); // Vai trò: Nhân viên
+    const isReader = computed(() => authStore.role === "Reader"); // Vai trò: Độc giả
+   const userName = computed(() => authStore.user); // Sử dụng trực tiếp giá trị từ authStore.user // Tên người dùng hoặc "Guest" nếu không xác định
 
-    // Authenticated state
-    const isAuthenticated = computed(() => authStore.isAuthenticated);
-    const userName = computed(() => authStore.role || "Guest");
-
+    // Hàm đăng xuất
     const logout = () => {
-      authStore.logout();
-      router.push("/"); // Redirect to home page after logout
-      console.log("Logged out and redirected to home.");
+      authStore.logout(); // Xóa thông tin đăng nhập
+      router.push("/login"); // Chuyển hướng đến trang đăng nhập
     };
 
     return {
       isAuthenticated,
+      isAdmin,
+      isEmployee,
+      isReader,
       userName,
       logout,
     };
@@ -112,9 +146,6 @@ export default {
   font-size: 1.1rem;
   display: flex;
   align-items: center;
-  gap: 5px; /* Space between icon and text */
-}
-.shadow-sm {
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  gap: 5px; /* Khoảng cách giữa icon và text */
 }
 </style>

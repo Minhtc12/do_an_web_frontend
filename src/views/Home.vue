@@ -1,4 +1,3 @@
-
 <template>
   <div class="home">
     <!-- Hero Section -->
@@ -13,10 +12,40 @@
         </div>
         <div v-else class="mt-4">
           <p>Xin chào, {{ userName }}!</p>
-          <router-link :to="dashboardPath" class="btn btn-success">Đi tới Dashboard</router-link>
         </div>
       </div>
     </div>
+
+    <!-- Search Books Section -->
+    <section id="search-books" class="container mt-5">
+      <h2 class="text-center mb-4">Tìm Kiếm Sách</h2>
+      <form @submit.prevent="searchBooks" class="search-form">
+        <div class="input-group">
+          <input
+            v-model="searchKeyword"
+            type="text"
+            class="form-control"
+            placeholder="Nhập tên sách hoặc từ khóa..."
+          />
+          <button type="submit" class="btn btn-primary">Tìm Kiếm</button>
+        </div>
+      </form>
+      <div v-if="searchedBooks.length" class="mt-4">
+        <h3 class="text-center">Kết Quả Tìm Kiếm</h3>
+        <div class="row">
+          <div v-for="book in searchedBooks" :key="book.id" class="col-md-4">
+            <div class="card shadow-sm">
+              <img :src="book.image" class="card-img-top" :alt="book.title">
+              <div class="card-body">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text">{{ book.description }}</p>
+                <a href="#" class="btn btn-outline-primary">Xem Chi Tiết</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Featured Books Section -->
     <section id="featured-books" class="container mt-5">
@@ -40,28 +69,42 @@
 <script>
 import { useAuthStore } from "../stores/authStore";
 import { ref, computed } from "vue";
+import BookService from "../services/book.service";
+
 export default {
   setup() {
     const authStore = useAuthStore();
-    const featuredBooks = ref([
-      { id: 1, title: "Sách 1", description: "Cuốn sách thú vị số 1", image: "book1.jpg" },
-      { id: 2, title: "Sách 2", description: "Cuốn sách thú vị số 2", image: "book2.jpg" },
-      { id: 3, title: "Sách 3", description: "Cuốn sách thú vị số 3", image: "book3.jpg" },
-    ]);
+    const searchKeyword = ref("");
+    const searchedBooks = ref([]);
+    const featuredBooks = ref([]);
+    
+    const fetchFeaturedBooks = async () => {
+      try {
+        const response = await BookService.getFeaturedBooks();
+        featuredBooks.value = response.data.slice(0, 6); // Hiển thị 6 sách nổi bật đầu tiên
+      } catch (error) {
+        console.error("Error fetching featured books:", error);
+      }
+    };
 
-    const dashboardPath = computed(() =>
-      authStore.role === "Reader"
-        ? "/reader-dashboard"
-        : authStore.role === "Employee"
-        ? "/employee-dashboard"
-        : "/manager-dashboard"
-    );
+    const searchBooks = async () => {
+      try {
+        const response = await BookService.searchBooks(searchKeyword.value);
+        searchedBooks.value = response.data;
+      } catch (error) {
+        console.error("Error searching books:", error);
+      }
+    };
+
+    fetchFeaturedBooks();
 
     return {
       isAuthenticated: authStore.isAuthenticated,
       userName: authStore.user?.email || "Khách",
-      dashboardPath,
       featuredBooks,
+      searchKeyword,
+      searchedBooks,
+      searchBooks,
     };
   },
 };
@@ -92,6 +135,15 @@ export default {
 }
 .btn-primary {
   margin: 10px;
+}
+
+/* Search Books Section */
+.search-form {
+  max-width: 600px;
+  margin: auto;
+}
+.search-form .input-group {
+  display: flex;
 }
 
 /* Featured Books Section */
