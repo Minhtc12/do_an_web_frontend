@@ -1,62 +1,60 @@
 <template>
   <div>
-    <h1 class="text-center mt-4">Quản Lý Mượn Sách</h1>
+    <h1 class="text-center mt-4">Quản Lý Sách Đã Mượn</h1>
     <div class="text-center my-4">
       <!-- Nút chức năng -->
-      <button class="btn btn-primary mx-2" @click="fetchBooks">Mượn Sách</button>
-      <button class="btn btn-secondary mx-2" @click="fetchBorrowHistory">Lịch Sử Mượn</button>
+      <button class="btn btn-warning mx-2" @click="fetchPendingBooks">Sách Chờ Duyệt</button>
+      <button class="btn btn-primary mx-2" @click="fetchBorrowedBooks">Sách Đã Mượn</button>
     </div>
 
-    <!-- Giao diện mượn sách -->
-    <div v-if="mode === 'borrow'">
-      <h2 class="text-center">Danh Sách Sách Có Thể Mượn</h2>
+    <!-- Giao diện sách chờ duyệt -->
+    <div v-if="mode === 'pending'">
+      <h2 class="text-center">Danh Sách Sách Đang Chờ Duyệt</h2>
       <table class="table table-striped mt-3">
         <thead>
           <tr>
             <th>Tên Sách</th>
-            <th>Tác Giả</th>
-            <th>Thể Loại</th>
+            <th>Ngày Mượn</th>
             <th>Hành Động</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="book in books" :key="book.MASACH">
-            <td>{{ book.TenSach }}</td>
-            <td>{{ book.TacGia }}</td>
-            <td>{{ book.TheLoai }}</td>
+          <tr v-for="record in pendingBooks" :key="record.MaMuon">
+            <td>{{ record.MASACH.TENSACH }}</td>
+            <td>{{ new Date(record.NGAYMUON).toLocaleDateString() }}</td>
             <td>
-              <button class="btn btn-success btn-sm" @click="borrowBook(book.MASACH)">Mượn</button>
+              <button class="btn btn-danger btn-sm" @click="cancelBorrowRequest(record.MaMuon)">Hủy</button>
             </td>
           </tr>
         </tbody>
       </table>
-      <p v-if="books.length === 0" class="text-center">Không có sách nào để mượn.</p>
+      <p v-if="pendingBooks.length === 0" class="text-center">Không có sách nào đang chờ duyệt.</p>
     </div>
 
-    <!-- Giao diện lịch sử mượn -->
-    <div v-if="mode === 'history'">
-      <h2 class="text-center">Lịch Sử Mượn Sách</h2>
+    <!-- Giao diện sách đã mượn -->
+    <div v-if="mode === 'borrowed'">
+      <h2 class="text-center">Danh Sách Sách Đã Mượn</h2>
       <table class="table table-striped mt-3">
         <thead>
           <tr>
             <th>Tên Sách</th>
-            <th>Tác Giả</th>
             <th>Ngày Mượn</th>
             <th>Ngày Trả</th>
-            <th>Trạng Thái</th>
+            <th>Hành Động</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="record in borrowHistory" :key="record.MaMuon">
-            <td>{{ record.MASACH.TenSach }}</td>
-            <td>{{ record.MASACH.TacGia }}</td>
+          <tr v-for="record in borrowedBooks" :key="record.MaMuon">
+            <td>{{ record.MASACH.TENSACH }}</td>
             <td>{{ new Date(record.NGAYMUON).toLocaleDateString() }}</td>
             <td>{{ record.NGAYTRA ? new Date(record.NGAYTRA).toLocaleDateString() : "Chưa trả" }}</td>
-            <td>{{ record.TrangThai }}</td>
+            <td>
+              <button v-if="!record.NGAYTRA" class="btn btn-success btn-sm" @click="returnBook(record.MaMuon)">Trả</button>
+            </td>
           </tr>
         </tbody>
       </table>
-      <p v-if="borrowHistory.length === 0" class="text-center">Không có lịch sử mượn sách để hiển thị.</p>
+      <p v-if="borrowedBooks.length === 0" class="text-center">Không có sách nào đã mượn.</p>
     </div>
   </div>
 </template>
@@ -66,58 +64,67 @@ import axios from "axios";
 export default {
   data() {
     return {
-      mode: null, // Chế độ hiển thị: "borrow" hoặc "history"
-      books: [], // Danh sách sách có thể mượn
-      borrowHistory: [], // Lịch sử mượn sách
+      mode: null, // Chế độ hiển thị: 'pending' hoặc 'borrowed'
+      pendingBooks: [], // Danh sách sách đang chờ duyệt
+      borrowedBooks: [], // Danh sách sách đã mượn
     };
   },
   methods: {
-    async fetchBooks() {
-      try {
-        const token = localStorage.getItem("token"); // Lấy token từ localStorage
-        const response = await axios.get("/api/books/available", {
-          headers: {
-            Authorization: `Bearer ${token}`, // Gửi token qua header
-          },
-        });
-        this.books = response.data;
-        this.mode = "borrow"; // Chuyển sang chế độ mượn sách
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách sách:", error);
-      }
-    },
-    async fetchBorrowHistory() {
-      try {
-        const token = localStorage.getItem("token"); // Lấy token từ localStorage
-        const response = await axios.get("/api/borrowings/history", {
-          headers: {
-            Authorization: `Bearer ${token}`, // Gửi token qua header
-          },
-        });
-        this.borrowHistory = response.data;
-        this.mode = "history"; // Chuyển sang chế độ lịch sử mượn
-      } catch (error) {
-        console.error("Lỗi khi lấy lịch sử mượn sách:", error);
-      }
-    },
-    async borrowBook(MASACH) {
+    async fetchPendingBooks() {
       try {
         const token = localStorage.getItem("token");
-        const userId = localStorage.getItem("userId"); // Lấy mã độc giả từ localStorage
+        const response = await axios.get("/api/borrowings/pending", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        const response = await axios.post("/api/borrowings/request", {
-          MASACH,
-          MADOCGIA: userId, // Gửi mã độc giả
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`, // Đính kèm token
-          },
+        this.pendingBooks = response.data;
+        this.mode = "pending"; // Chuyển sang chế độ hiển thị sách chờ duyệt
+        console.log("Danh sách sách chờ duyệt:", this.pendingBooks);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách sách chờ duyệt:", error);
+      }
+    },
+
+    async fetchBorrowedBooks() {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("/api/borrowings/borrowed", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        this.borrowedBooks = response.data;
+        this.mode = "borrowed"; // Chuyển sang chế độ hiển thị sách đã mượn
+        console.log("Danh sách sách đã mượn:", this.borrowedBooks);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách sách đã mượn:", error);
+      }
+    },
+
+    async cancelBorrowRequest(MaMuon) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.delete(`/api/borrowings/cancel/${MaMuon}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         alert(response.data.message);
-        this.fetchBooks(); // Làm mới danh sách sách sau khi mượn
+        this.fetchPendingBooks(); // Làm mới danh sách sách chờ duyệt
       } catch (error) {
-        console.error("Lỗi khi mượn sách:", error);
+        console.error("Lỗi khi hủy yêu cầu mượn sách:", error);
+      }
+    },
+
+    async returnBook(MaMuon) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.post(`/api/borrowings/return/${MaMuon}`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        alert(response.data.message);
+        this.fetchBorrowedBooks(); // Làm mới danh sách sách đã mượn
+      } catch (error) {
+        console.error("Lỗi khi trả sách:", error);
       }
     },
   },

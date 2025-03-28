@@ -78,7 +78,7 @@ export default {
     // Lấy danh sách yêu cầu chờ duyệt
     async fetchPendingRequests() {
       try {
-        const response = await axios.get("/api/borrowings/all?status=pending");
+        const response = await axios.get("/api/borrowings/requests/pending");
         this.borrows = response.data;
         this.mode = "pending"; // Chuyển sang chế độ "pending"
       } catch (error) {
