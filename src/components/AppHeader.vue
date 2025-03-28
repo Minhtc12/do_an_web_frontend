@@ -29,11 +29,11 @@
                 <i class="bi bi-house-door"></i> Home
               </router-link>
             </li>
-            <li class="nav-item">
+            <!-- <li class="nav-item">
               <router-link to="/books" class="nav-link">
                 <i class="bi bi-book"></i> Book 
               </router-link>
-            </li>
+            </li> -->
 
             <!-- Links dành cho Quản lý -->
             <li v-if="isAdmin" class="nav-item">
@@ -51,12 +51,16 @@
 
             <!-- Links dành cho Nhân viên -->
             <li v-if="isAdmin || isEmployee" class="nav-item">
-              <router-link to="/borrow-requests" class="nav-link">
+              <router-link to="/borrowing-management" class="nav-link">
                 <i class="bi bi-list-check"></i> Borrow
               </router-link>
             </li>
-            <li v-if="isAdmin || isEmployee"><router-link to="/borrowing-management">Borrow</router-link></li>
-    
+            
+            <li v-if="isAdmin || isEmployee" class="nav-item">
+              <router-link to="/books" class="nav-link">
+                <i class="bi bi-book"></i> Book 
+              </router-link>
+            </li>
 
             <!-- Links dành cho Độc giả -->
              <li v-if="isReader" class="nav-item">
@@ -65,8 +69,13 @@
               </router-link>
             </li>
             <li v-if="isReader" class="nav-item">
+              <router-link to="/borrow" class="nav-link">
+                <i class="bi bi-bookmark"></i> BorrowHistory
+              </router-link>
+            </li>
+            <li v-if="isReader" class="nav-item">
               <router-link to="/profile" class="nav-link">
-                <i class="bi bi-person-circle"></i> My Profile
+                <i class="bi bi-person-circle"></i> MyProfile
               </router-link>
             </li>
             <!-- <li v-if="isReader" class="nav-item">
@@ -74,7 +83,7 @@
                 <i class="bi bi-bookmark-check"></i> My Borrow History
               </router-link>
             </li> -->
-            <li v-if="isReader"><router-link to="/borrowing-management">Borrow</router-link></li>
+            <!-- <li v-if="isReader"><router-link to="/borrowing-management">Borrow</router-link></li> -->
     
           </ul>
 

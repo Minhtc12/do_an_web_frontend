@@ -23,12 +23,19 @@ export const useAuthStore = defineStore("auth", {
     const storedUser = localStorage.getItem("user");
     this.user = storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : (this.role || "Reader");
 
-    console.log("Đã khởi tạo trạng thái từ LocalStorage:", { token: this.token, role: this.role, user: this.user });
+    const storedUserId = localStorage.getItem("userId"); // Đọc userId từ localStorage
+    this.userId = storedUserId && storedUserId !== "undefined" ? storedUserId : null;
+
+    const storedToken = localStorage.getItem("token"); // Đọc token từ localStorage
+    this.token = storedToken || null;
+
+    console.log("Đã khởi tạo trạng thái từ LocalStorage:", { token: this.token, role: this.role, user: this.user, userId: this.userId });
   } catch (error) {
     console.error("Lỗi khi khởi tạo trạng thái:", error);
     this.token = null;
     this.role = null;
     this.user = null;
+    this.userId = null;
   }
 },
    async login(email, password, userType) {
@@ -37,29 +44,33 @@ export const useAuthStore = defineStore("auth", {
     const response = await AuthService.login(email, password, endpoint);
 
     this.token = response.token;
-    this.role = response.role; // Cập nhật vai trò chính xác từ backend
-    this.user = response.name || "Reader";
+    this.role = response.role; // Vai trò từ backend
+    this.user = response.name || "Nhân viên"; // Tên người dùng từ backend
+    this.userId = response.MSNV|| response.MADOCGIA|| null; // Lưu MADOCGIA hoặc MSNV từ backend
 
     // Lưu thông tin vào localStorage
-    localStorage.setItem("token", this.token);
-    localStorage.setItem("role", this.role); // Lưu vai trò
+    localStorage.setItem("token", response.token);
+    localStorage.setItem("role", response.role); // Lưu vai trò
     localStorage.setItem("user", JSON.stringify(this.user));
+    localStorage.setItem("userId", this.userId); // Lưu userId
 
-    console.log("Đăng nhập thành công:", { token: this.token, role: this.role, user: this.user });
+    console.log("Đăng nhập thành công:", { token: this.token, role: this.role, user: this.user, userId: this.userId });
   } catch (error) {
     console.error("Lỗi đăng nhập:", error.message || error);
-    throw error;
+    throw error; // Ném lỗi để giao diện xử lý
   }
 },
     logout() {
       this.token = null; // Xóa token
       this.role = null;  // Xóa vai trò
       this.user = null;  // Xóa thông tin người dùng
+      this.userId = null;
 
       // Xóa dữ liệu trong localStorage
-      localStorage.removeItem("token");
+      localStorage.removeItem("this.token");
       localStorage.removeItem("role");
       localStorage.removeItem("user");
+      localStorage.removeItem("userId");
 
       console.log("Đã đăng xuất và cập nhật trạng thái authStore.");
     },

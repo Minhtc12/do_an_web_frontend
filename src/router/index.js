@@ -4,6 +4,7 @@ import Home from "../views/Home.vue";
 import BookManagement from "../views/BookManagement.vue";
 import AddBook from "../views/AddBook.vue"
 import BorrowingManagement from "@/views/BorrowingManagement.vue"; // Đảm bảo import file đúng
+import Borrow from "@/views/Borrow.vue";
 
 
 const routes = [
@@ -51,6 +52,11 @@ const routes = [
     path: "/borrowing-management",
     name: "BorrowingManagement",
     component: BorrowingManagement,
+  },
+{
+    path: "/borrow",
+    name: "Borrow",
+    component: Borrow,
   },
 
 

@@ -16,7 +16,7 @@
 
       <div class="text-end">
         <button class="btn btn-warning me-2" @click="navigateToUpdateBook">Update Book</button>
-        <button class="btn btn-danger" @click="confirmDelete">Delete Book</button>
+        <button v-if="isAdmin || isEmployee" class="btn btn-danger" @click="confirmDelete">Delete Book</button>
       </div>
     </div>
 
@@ -32,9 +32,12 @@ import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import BookService from "../services/book.service";
 import { useRouter } from "vue-router";
+import { computed } from "vue";
+import { useAuthStore } from "../stores/authStore";
 export default {
   name: "BookDetail",
   setup() {
+    const authStore = useAuthStore();
     const route = useRoute();
     const router = useRouter();
     const book = ref(null);
@@ -47,7 +50,9 @@ export default {
         deleteBook();
     }
     };
-
+    const isAdmin = computed(() => authStore.role === "Quản lý"); // Vai trò: Quản lý
+    const isEmployee = computed(() => authStore.role === "Nhân viên"); // Vai trò: Nhân viên
+    const isReader = computed(() => authStore.role === "Reader");
 const deleteBook = async () => {
   try {
     await BookService.deleteBook(book.value.MASACH);
@@ -76,7 +81,9 @@ const deleteBook = async () => {
       book,
       confirmDelete,
       navigateToUpdateBook,
-      
+      isAdmin,
+      isEmployee,
+      isReader,
      };
   },
 };
